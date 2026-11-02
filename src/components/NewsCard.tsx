@@ -1,4 +1,5 @@
 import { ChevronRight, Star, StarFilled } from '@/assets/icons'
+import { categoryNames } from '@/constants'
 import { NewsContext } from '@/context/NewsContext'
 import { timeFormating } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
@@ -91,12 +92,12 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.article, pressed && styles.articlePressed]}>
       {article.image?.startsWith('http') && (
-        <Image source={{ uri: article.image }} style={styles.articleImage} contentFit="contain" contentPosition="top" />
+        <Image source={{ uri: article.image }} style={styles.articleImage} contentFit="contain" />
       )}
       {!article.image?.startsWith('http') && <View style={styles.articleImage} />}
       <View style={styles.articleInfo}>
         <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
-        <Text style={styles.articleCategory} numberOfLines={1}>{article.category.join(', ')}</Text>
+        <Text style={styles.articleCategory} numberOfLines={1}>{article.category.map(category => categoryNames[category] ?? category).join(', ')}</Text>
         <Text style={styles.articleDescription} numberOfLines={2}>{article.description}</Text>
         <Text style={styles.articleMetadata} numberOfLines={1}>{new URL(article.url).hostname.replace(/^www\./, '')}</Text>
         <Text style={styles.articleMetadata}>{timeFormating(article.published)}</Text>

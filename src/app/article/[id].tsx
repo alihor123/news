@@ -1,4 +1,5 @@
 import { Star, StarFilled } from '@/assets/icons'
+import { categoryNames } from '@/constants'
 import { NewsContext } from '@/context/NewsContext'
 import { timeFormating } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
@@ -150,7 +151,7 @@ export default function ArticleScreen() {
         <View style={styles.articleHeader}>
           <View style={styles.articleInfo}>
             <Text style={styles.articleTitle}>{article.title}</Text>
-            <Text style={styles.articleCategory}>{article.category.join(', ')}</Text>
+            <Text style={styles.articleCategory}>{article.category.map(category => categoryNames[category] ?? category).join(', ')}</Text>
           </View>
           <Pressable
             disabled={isFavoritesLoading}

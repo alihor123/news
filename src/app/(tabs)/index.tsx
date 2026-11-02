@@ -1,5 +1,6 @@
 import { Search } from '@/assets/icons'
 import { NewsCard } from '@/components/NewsCard'
+import { categoryNames } from '@/constants'
 import { NewsContext } from '@/context/NewsContext'
 import { showMessage } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
@@ -350,7 +351,7 @@ export default function Index() {
                 styles.categoryText,
                 filter === category && styles.categorySelectedText
               ]}>
-                {category}
+                {categoryNames[category] ?? category}
               </Text>
             </Pressable>
           ))}
