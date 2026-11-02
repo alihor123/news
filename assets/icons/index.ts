@@ -1,0 +1,6 @@
+export const Search = require('./Search.svg')
+export const ChevronRight = require('./ChevronRight.svg')
+export const StarFilled = require('./StarFilled.svg')
+export const ArrowDown = require('./ArrowDown.svg')
+export const Star = require('./Star.svg')
+export const Catalog = require('./Catalog.svg')

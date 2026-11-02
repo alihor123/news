@@ -1,0 +1,33 @@
+# Dependencies and Expo cache
+node_modules/
+.expo/
+
+# Generated builds and native projects
+dist/
+web-build/
+coverage/
+/android/
+/ios/
+expo-env.d.ts
+*.tsbuildinfo
+*.apk
+*.aab
+*.ipa
+
+# Environment variables and signing credentials
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Logs and local files
+*.log
+.eslintcache
+.DS_Store
+Thumbs.db
+.idea/
