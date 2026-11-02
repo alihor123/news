@@ -1,18 +1,18 @@
 {
   "expo": {
-    "name": "Продукты",
-    "slug": "product",
+    "name": "Новости",
+    "slug": "news",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "product",
+    "scheme": "news",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/images/icon.png",
     "ios": {
-      "bundleIdentifier": "com.anonymous.product"
+      "bundleIdentifier": "com.anonymous.news"
     },
     "android": {
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.product",
+      "package": "com.anonymous.news",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1677FF"
