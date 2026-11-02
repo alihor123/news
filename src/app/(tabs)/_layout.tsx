@@ -1,4 +1,4 @@
-import { Catalog, Star, StarFilled } from '@/assets/icons'
+import { News, Star, StarFilled } from '@/assets/icons'
 import { useStyles } from '@/hooks/useStyles'
 import { Image } from 'expo-image'
 import { TopTabs } from 'expo-router/js-top-tabs'
@@ -65,9 +65,9 @@ export default function TabLayout() {
       tabBarInactiveTintColor: styles.inactiveTab.color
     }}>
       <TopTabs.Screen name="index" options={{
-        title: 'Каталог',
+        title: 'Лента',
         tabBarIcon: ({ focused }) => (
-          <Image source={Catalog} style={styles.tabIcon} tintColor={focused ? styles.activeTab.color : styles.inactiveTab.color} />
+          <Image source={News} style={styles.tabIcon} tintColor={focused ? styles.activeTab.color : styles.inactiveTab.color} />
         )
       }} />
       <TopTabs.Screen name="favorites" options={{

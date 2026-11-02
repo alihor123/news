@@ -1,4 +1,4 @@
-import { ProductProvider } from '@/context/ProductContext'
+import { NewsProvider } from '@/context/NewsContext'
 import { useStyles } from '@/hooks/useStyles'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
@@ -18,7 +18,7 @@ export default function RootLayout() {
   }))
 
   return (
-    <ProductProvider>
+    <NewsProvider>
       <StatusBar style="auto" />
       <Stack screenOptions={{
         animation: 'default',
@@ -28,8 +28,8 @@ export default function RootLayout() {
         headerShadowVisible: false
       }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="product/[id]" options={{ title: 'Товар' }} />
+        <Stack.Screen name="article/[id]" options={{ title: 'Статья' }} />
       </Stack>
-    </ProductProvider>
+    </NewsProvider>
   )
 }

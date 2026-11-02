@@ -1,54 +1,54 @@
 import { ChevronRight, Star, StarFilled } from '@/assets/icons'
-import { ProductContext } from '@/context/ProductContext'
+import { NewsContext } from '@/context/NewsContext'
 import { useStyles } from '@/hooks/useStyles'
 import { type Product } from '@/services/products.api'
 import { Image } from 'expo-image'
 import { useContext } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
-type ProductCardProps = {
-  product: Product
+type NewsCardProps = {
+  article: Product
   onPress: () => void
 }
 
-export function ProductCard({ product, onPress }: ProductCardProps) {
+export function NewsCard({ article, onPress }: NewsCardProps) {
   const styles = useStyles((colors) => ({
-    product: {
+    article: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 8,
       gap: 12
     },
-    productPressed: {
+    articlePressed: {
       transform: [{ scale: 0.98 }]
     },
-    productImage: {
+    articleImage: {
       width: 72,
       height: 72,
       borderRadius: 12,
       backgroundColor: colors.imagePlaceholder
     },
-    productInfo: {
+    articleInfo: {
       flex: 1,
       minWidth: 0,
       gap: 6
     },
-    productTitle: {
+    articleTitle: {
       fontSize: 16,
       lineHeight: 22,
       fontWeight: '600',
       color: colors.text
     },
-    productCategory: {
+    articleCategory: {
       fontSize: 14,
       color: colors.textSecondary
     },
-    productPrice: {
+    articleDescription: {
       fontSize: 14,
-      fontWeight: '600',
-      color: colors.text
+      lineHeight: 20,
+      color: colors.textSecondary
     },
-    productActions: {
+    articleActions: {
       alignSelf: 'stretch',
       alignItems: 'flex-end',
       justifyContent: 'space-between',
@@ -71,38 +71,36 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
     buttonPressed: {
       opacity: 0.6
     },
-    productArrow: {
+    articleArrow: {
       width: 20,
       height: 20,
       tintColor: colors.textSecondary
     }
   }))
 
-  const { favoriteProducts, isFavoritesLoading, changeFavorite } = useContext(ProductContext)!
-  const isFavorite = Boolean(favoriteProducts[product.uuid])
+  const { favoriteNews, isFavoritesLoading, changeFavorite } = useContext(NewsContext)!
+  const isFavorite = Boolean(favoriteNews[article.uuid])
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.product, pressed && styles.productPressed]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.article, pressed && styles.articlePressed]}>
       <Image
-        source={{ uri: product.image_url }}
-        style={styles.productImage}
+        source={{ uri: article.image_url }}
+        style={styles.articleImage}
         contentFit="contain"
       />
-      <View style={styles.productInfo}>
-        <Text style={styles.productTitle} numberOfLines={2}>{product.name}</Text>
-        <Text style={styles.productCategory}>{product.category}</Text>
-        <Text style={styles.productPrice}>
-          {(product.price / 100).toLocaleString('ru-RU', { style: 'currency', currency: product.currency })}
-        </Text>
+      <View style={styles.articleInfo}>
+        <Text style={styles.articleTitle} numberOfLines={2}>{article.name}</Text>
+        <Text style={styles.articleCategory}>{article.category}</Text>
+        <Text style={styles.articleDescription} numberOfLines={2}>{article.description}</Text>
       </View>
-      <View style={styles.productActions}>
-        <Image source={ChevronRight} style={styles.productArrow} tintColor={styles.productArrow.tintColor} />
+      <View style={styles.articleActions}>
+        <Image source={ChevronRight} style={styles.articleArrow} tintColor={styles.articleArrow.tintColor} />
         <Pressable
           disabled={isFavoritesLoading}
           hitSlop={8}
           onPress={event => {
             event.stopPropagation()
-            changeFavorite(product)
+            changeFavorite(article)
           }}
           style={({ pressed }) => [styles.favoriteButton, pressed && styles.buttonPressed]}
         >

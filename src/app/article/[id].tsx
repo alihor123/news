@@ -1,5 +1,5 @@
 import { Star, StarFilled } from '@/assets/icons'
-import { ProductContext } from '@/context/ProductContext'
+import { NewsContext } from '@/context/NewsContext'
 import { useStyles } from '@/hooks/useStyles'
 import { getProduct, type Product } from '@/services/products.api'
 import { Image } from 'expo-image'
@@ -8,7 +8,7 @@ import { useContext, useEffect, useState } from 'react'
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-export default function ProductScreen() {
+export default function ArticleScreen() {
   const styles = useStyles((colors) => ({
     container: {
       flex: 1,
@@ -24,36 +24,30 @@ export default function ProductScreen() {
       padding: 24,
       gap: 20
     },
-    productImage: {
+    articleImage: {
       width: '100%',
       height: 240,
       borderRadius: 16,
       backgroundColor: colors.imagePlaceholder
     },
-    productInfo: {
+    articleInfo: {
+      flex: 1,
       gap: 8
     },
-    productTitle: {
+    articleTitle: {
       fontSize: 26,
       lineHeight: 34,
       fontWeight: '700',
       color: colors.text
     },
-    productCategory: {
+    articleCategory: {
       fontSize: 16,
       color: colors.textSecondary
     },
-    productDetails: {
+    articleHeader: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      alignItems: 'flex-start',
       gap: 12
-    },
-    productPrice: {
-      fontSize: 26,
-      fontWeight: '700',
-      color: colors.primary
     },
     favoriteButton: {
       width: 44,
@@ -112,25 +106,25 @@ export default function ProductScreen() {
     }
   }))
 
-  const { favoriteProducts, isFavoritesLoading, changeFavorite } = useContext(ProductContext)!
+  const { favoriteNews, isFavoritesLoading, changeFavorite } = useContext(NewsContext)!
   const { id } = useLocalSearchParams<{ id: string }>()
-  const [product, setProduct] = useState<Product | null>(null)
+  const [article, setArticle] = useState<Product | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isErrorLoading, setIsErrorLoading] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
 
-  //Загрузка товара по UUID и повторная попытка
+  //Загрузка статьи по UUID и повторная попытка
   useEffect(() => {
     let isActive = true
 
-    async function loadProduct() {
+    async function loadArticle() {
       setIsLoading(true)
       setIsErrorLoading(false)
 
       try {
         const data = await getProduct(id)
 
-        if (isActive) setProduct(data)
+        if (isActive) setArticle(data)
       }
       catch {
         if (isActive) setIsErrorLoading(true)
@@ -140,7 +134,7 @@ export default function ProductScreen() {
       }
     }
 
-    const timer = setTimeout(loadProduct, 0)
+    const timer = setTimeout(loadArticle, 0)
 
     return () => {
       clearTimeout(timer)
@@ -148,23 +142,23 @@ export default function ProductScreen() {
     }
   }, [id, retryCount])
 
-  //Повторная загрузка товара после ошибки
-  function retryLoadProduct() {
+  //Повторная загрузка статьи после ошибки
+  function retryLoadArticle() {
     setIsLoading(true)
     setIsErrorLoading(false)
     setRetryCount(previousCount => previousCount + 1)
   }
 
-  if (isLoading || isErrorLoading || !product) {
+  if (isLoading || isErrorLoading || !article) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.empty}>
           {isLoading && <ActivityIndicator size="large" color={styles.loader.color} />}
           {!isLoading && isErrorLoading && (
             <>
-              <Text style={styles.emptyText}>Не удалось загрузить товар</Text>
+              <Text style={styles.emptyText}>Не удалось загрузить статью</Text>
               <Pressable
-                onPress={retryLoadProduct}
+                onPress={retryLoadArticle}
                 style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}
               >
                 <Text style={styles.retryText}>Повторить</Text>
@@ -176,26 +170,22 @@ export default function ProductScreen() {
     )
   }
 
-  const isFavorite = Boolean(favoriteProducts[product.uuid])
+  const isFavorite = Boolean(favoriteNews[article.uuid])
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Image source={{ uri: product.image_url }} style={styles.productImage} contentFit="contain" />
+        <Image source={{ uri: article.image_url }} style={styles.articleImage} contentFit="contain" />
 
-        <View style={styles.productInfo}>
-          <Text style={styles.productTitle}>{product.name}</Text>
-          <Text style={styles.productCategory}>{product.category}</Text>
-        </View>
-
-        <View style={styles.productDetails}>
-          <Text style={styles.productPrice}>
-            {(product.price / 100).toLocaleString('ru-RU', { style: 'currency', currency: product.currency })}
-          </Text>
+        <View style={styles.articleHeader}>
+          <View style={styles.articleInfo}>
+            <Text style={styles.articleTitle}>{article.name}</Text>
+            <Text style={styles.articleCategory}>{article.category}</Text>
+          </View>
           <Pressable
             disabled={isFavoritesLoading}
             hitSlop={8}
-            onPress={() => changeFavorite(product)}
+            onPress={() => changeFavorite(article)}
             style={({ pressed }) => [styles.favoriteButton, pressed && styles.buttonPressed]}
           >
             <Image
@@ -208,7 +198,7 @@ export default function ProductScreen() {
 
         <View style={styles.description}>
           <Text style={styles.descriptionTitle}>Описание</Text>
-          <Text style={styles.descriptionText}>{product.description}</Text>
+          <Text style={styles.descriptionText}>{article.description}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

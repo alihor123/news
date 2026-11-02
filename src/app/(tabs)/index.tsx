@@ -1,5 +1,5 @@
-import { ArrowDown, Search } from '@/assets/icons'
-import { ProductCard } from '@/components/ProductCard'
+import { Search } from '@/assets/icons'
+import { NewsCard } from '@/components/NewsCard'
 import { showMessage } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
 import { getCategories, getProducts, type Category, type Product } from '@/services/products.api'
@@ -35,25 +35,6 @@ export default function Index() {
       fontSize: 26,
       fontWeight: '700',
       color: colors.text
-    },
-    sortButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 8,
-      gap: 6
-    },
-    sortText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: colors.primary
-    },
-    sortIcon: {
-      width: 18,
-      height: 18,
-      tintColor: colors.primary
-    },
-    sortIconReversed: {
-      transform: [{ rotate: '180deg' }]
     },
     search: {
       marginHorizontal: 24,
@@ -105,10 +86,10 @@ export default function Index() {
     categorySelectedText: {
       color: colors.onPrimary
     },
-    productList: {
+    newsList: {
       flex: 1
     },
-    productListContent: {
+    newsListContent: {
       flexGrow: 1,
       paddingHorizontal: 24,
       gap: 12
@@ -148,9 +129,8 @@ export default function Index() {
     }
   }))
 
-  const [products, setProducts] = useState<Product[]>([])
+  const [news, setNews] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [sort, setSort] = useState<'price_asc' | 'price_desc'>('price_asc')
   const [filter, setFilter] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -158,13 +138,13 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(true)
   const [isErrorLoading, setIsErrorLoading] = useState(false)
   const [isNextPageLoading, setIsNextPageLoading] = useState(false)
-  const productsRequestRef = useRef(0)
-  const isProductsLoadingRef = useRef(false)
+  const newsRequestRef = useRef(0)
+  const isNewsLoadingRef = useRef(false)
 
-  //Загрузка каталога и продуктов при старте
-  async function loadCatalog() {
-    const request = ++productsRequestRef.current
-    isProductsLoadingRef.current = true
+  //Загрузка ленты и категорий при старте
+  async function loadFeed() {
+    const request = ++newsRequestRef.current
+    isNewsLoadingRef.current = true
     setIsLoading(true)
     setIsErrorLoading(false)
     setIsNextPageLoading(false)
@@ -172,144 +152,133 @@ export default function Index() {
     try {
       const [newCategories, data] = await Promise.all([
         getCategories(),
-        getProducts({ search: search.trim(), category: filter ?? undefined, sort })
+        getProducts({ search: search.trim(), category: filter ?? undefined })
       ])
 
-      if (request !== productsRequestRef.current) return
+      if (request !== newsRequestRef.current) return
 
       setCategories(newCategories)
-      setProducts(data.data)
+      setNews(data.data)
       setPage(data.meta.current_page)
       setTotalPages(data.meta.total_pages)
     }
     catch {
-      if (request === productsRequestRef.current) {
+      if (request === newsRequestRef.current) {
         setIsErrorLoading(true)
       }
     }
     finally {
-      if (request === productsRequestRef.current) {
-        isProductsLoadingRef.current = false
+      if (request === newsRequestRef.current) {
+        isNewsLoadingRef.current = false
         setIsLoading(false)
       }
     }
   }
 
-  //Обновление товаров при изменении поиска, категории или сортировки
-  async function loadProducts() {
-    const request = ++productsRequestRef.current
-    isProductsLoadingRef.current = true
+  //Обновление новостей при изменении поиска или категории
+  async function loadNews() {
+    const request = ++newsRequestRef.current
+    isNewsLoadingRef.current = true
     setIsLoading(true)
     setIsErrorLoading(false)
     setIsNextPageLoading(false)
 
     try {
-      const data = await getProducts({ search: search.trim(), category: filter ?? undefined, sort })
+      const data = await getProducts({ search: search.trim(), category: filter ?? undefined })
 
-      if (request !== productsRequestRef.current) return
+      if (request !== newsRequestRef.current) return
 
-      setProducts(data.data)
+      setNews(data.data)
       setPage(data.meta.current_page)
       setTotalPages(data.meta.total_pages)
     }
     catch {
-      if (request === productsRequestRef.current) {
+      if (request === newsRequestRef.current) {
         setIsErrorLoading(true)
       }
     }
     finally {
-      if (request === productsRequestRef.current) {
-        isProductsLoadingRef.current = false
+      if (request === newsRequestRef.current) {
+        isNewsLoadingRef.current = false
         setIsLoading(false)
       }
     }
   }
 
-  //Первоначальная загрузка и обновление товаров при сортировке или фильтрации
+  //Первоначальная загрузка и обновление новостей при поиске или фильтрации
   useEffect(
     () => {
-      isProductsLoadingRef.current = true
+      isNewsLoadingRef.current = true
 
       const timer = setTimeout(() => {
         if (categories.length === 0) {
-          loadCatalog()
+          loadFeed()
         }
         else {
-          loadProducts()
+          loadNews()
         }
       }, 200)
 
       return () => {
         clearTimeout(timer)
-        productsRequestRef.current += 1
+        newsRequestRef.current += 1
       }
     },
-    [search, filter, sort]
+    [search, filter]
   )
-
-  //Смена сортировки по цене
-  function changeSort() {
-    if (sort === 'price_asc') {
-      setSort('price_desc')
-    }
-    else {
-      setSort('price_asc')
-    }
-  }
 
   //Загрузка следующей страницы при прокрутке
   async function loadNextPage() {
-    if (isProductsLoadingRef.current || page >= totalPages) return
+    if (isNewsLoadingRef.current || page >= totalPages) return
 
-    const request = ++productsRequestRef.current
-    isProductsLoadingRef.current = true
+    const request = ++newsRequestRef.current
+    isNewsLoadingRef.current = true
     setIsNextPageLoading(true)
 
     try {
       const data = await getProducts({
         search: search.trim(),
         category: filter ?? undefined,
-        sort,
         page: page + 1
       })
 
-      if (request !== productsRequestRef.current) return
+      if (request !== newsRequestRef.current) return
 
-      setProducts(previousProducts => [...previousProducts, ...data.data])
+      setNews(previousNews => [...previousNews, ...data.data])
       setPage(data.meta.current_page)
       setTotalPages(data.meta.total_pages)
     }
     catch (error) {
-      if (request === productsRequestRef.current) {
+      if (request === newsRequestRef.current) {
         showMessage(error instanceof ApiError ? error.message : 'Не удалось загрузить следующую страницу')
       }
     }
     finally {
-      if (request === productsRequestRef.current) {
-        isProductsLoadingRef.current = false
+      if (request === newsRequestRef.current) {
+        isNewsLoadingRef.current = false
         setIsNextPageLoading(false)
       }
     }
   }
 
-  //Открытие экрана конкретного товара
-  function openProduct(uuid: string) {
+  //Открытие экрана конкретной статьи
+  function openArticle(uuid: string) {
     router.push({
-      pathname: '/product/[id]',
+      pathname: '/article/[id]',
       params: { id: uuid }
     })
   }
 
   //Анимация первоначальной загрузки и отображение ошибки
-  function renderCatalogStatus() {
+  function renderFeedStatus() {
     return (
       <View style={styles.empty}>
         {isLoading && <ActivityIndicator size="large" color={styles.loader.color} />}
         {!isLoading && isErrorLoading && (
           <>
-            <Text style={styles.emptyText}>Не удалось загрузить каталог</Text>
+            <Text style={styles.emptyText}>Не удалось загрузить новости</Text>
             <Pressable
-              onPress={loadCatalog}
+              onPress={loadFeed}
               style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}
             >
               <Text style={styles.retryText}>Повторить</Text>
@@ -323,7 +292,7 @@ export default function Index() {
   if (categories.length === 0 && (isLoading || isErrorLoading)) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        {renderCatalogStatus()}
+        {renderFeedStatus()}
       </SafeAreaView>
     )
   }
@@ -332,18 +301,7 @@ export default function Index() {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Продукты</Text>
-          <Pressable
-            onPress={changeSort}
-            style={({ pressed }) => [styles.sortButton, pressed && styles.buttonPressed]}
-          >
-            <Text style={styles.sortText}>{sort === 'price_asc' ? 'Дешевле' : 'Дороже'}</Text>
-            <Image
-              source={ArrowDown}
-              style={[styles.sortIcon, sort === 'price_desc' && styles.sortIconReversed]}
-              tintColor={styles.sortIcon.tintColor}
-            />
-          </Pressable>
+          <Text style={styles.title}>Новости</Text>
         </View>
 
         <View style={styles.search}>
@@ -351,7 +309,7 @@ export default function Index() {
             value={search}
             onChangeText={setSearch}
             style={styles.searchInput}
-            placeholder="Поиск товаров"
+            placeholder="Поиск новостей"
             placeholderTextColor={styles.placeholder.color}
           />
           <Image
@@ -398,14 +356,14 @@ export default function Index() {
           ))}
         </ScrollView>
 
-        {(isLoading || isErrorLoading) && renderCatalogStatus()}
+        {(isLoading || isErrorLoading) && renderFeedStatus()}
         {!isLoading && !isErrorLoading && (
           <FlatList
-            data={products}
+            data={news}
             keyboardShouldPersistTaps="handled"
             keyExtractor={item => item.uuid}
-            style={styles.productList}
-            contentContainerStyle={styles.productListContent}
+            style={styles.newsList}
+            contentContainerStyle={styles.newsListContent}
             ListEmptyComponent={
               <View style={styles.empty}>
                 <Text style={styles.emptyText}>Ничего не найдено</Text>
@@ -419,9 +377,9 @@ export default function Index() {
               </View>
             }
             renderItem={({ item }) => (
-              <ProductCard
-                product={item}
-                onPress={() => openProduct(item.uuid)}
+              <NewsCard
+                article={item}
+                onPress={() => openArticle(item.uuid)}
               />
             )}
           />

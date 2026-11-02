@@ -1,5 +1,5 @@
-import { ProductCard } from '@/components/ProductCard'
-import { ProductContext } from '@/context/ProductContext'
+import { NewsCard } from '@/components/NewsCard'
+import { NewsContext } from '@/context/NewsContext'
 import { useStyles } from '@/hooks/useStyles'
 import { router } from 'expo-router'
 import { useContext } from 'react'
@@ -26,10 +26,10 @@ export default function Favorites() {
       fontWeight: '700',
       color: colors.text
     },
-    productList: {
+    newsList: {
       flex: 1
     },
-    productListContent: {
+    newsListContent: {
       flexGrow: 1,
       paddingHorizontal: 24,
       gap: 12
@@ -49,12 +49,12 @@ export default function Favorites() {
     }
   }))
 
-  const { favoriteProducts, isFavoritesLoading } = useContext(ProductContext)!
+  const { favoriteNews, isFavoritesLoading } = useContext(NewsContext)!
 
-  //Открытие товара из избранного
-  function openProduct(uuid: string) {
+  //Открытие статьи из избранного
+  function openArticle(uuid: string) {
     router.push({
-      pathname: '/product/[id]',
+      pathname: '/article/[id]',
       params: { id: uuid }
     })
   }
@@ -70,17 +70,17 @@ export default function Favorites() {
         )}
         {!isFavoritesLoading && (
           <FlatList
-            data={Object.values(favoriteProducts)}
+            data={Object.values(favoriteNews)}
             keyExtractor={item => item.uuid}
-            style={styles.productList}
-            contentContainerStyle={styles.productListContent}
+            style={styles.newsList}
+            contentContainerStyle={styles.newsListContent}
             ListEmptyComponent={
               <View style={styles.empty}>
-                <Text style={styles.emptyText}>Избранных товаров пока нет</Text>
+                <Text style={styles.emptyText}>Избранных новостей пока нет</Text>
               </View>
             }
             renderItem={({ item }) => (
-              <ProductCard product={item} onPress={() => openProduct(item.uuid)} />
+              <NewsCard article={item} onPress={() => openArticle(item.uuid)} />
             )}
           />
         )}

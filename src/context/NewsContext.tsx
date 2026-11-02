@@ -3,22 +3,22 @@ import { type Product } from '@/services/products.api'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createContext, useEffect, useRef, useState, type ReactNode } from 'react'
 
-type FavoriteProducts = Record<string, Product>
+type FavoriteNews = Record<string, Product>
 
-type ProductContextType = {
-  favoriteProducts: FavoriteProducts
+type NewsContextType = {
+  favoriteNews: FavoriteNews
   isFavoritesLoading: boolean
-  changeFavorite: (product: Product) => Promise<void>
+  changeFavorite: (article: Product) => Promise<void>
 }
 
-type ProductProviderProps = {
+type NewsProviderProps = {
   children: ReactNode
 }
 
-export const ProductContext = createContext<ProductContextType | null>(null)
+export const NewsContext = createContext<NewsContextType | null>(null)
 
-export function ProductProvider({ children }: ProductProviderProps) {
-  const [favoriteProducts, setFavoriteProducts] = useState<FavoriteProducts>({})
+export function NewsProvider({ children }: NewsProviderProps) {
+  const [favoriteNews, setFavoriteNews] = useState<FavoriteNews>({})
   const [isFavoritesLoading, setIsFavoritesLoading] = useState(true)
   const isFavoriteSavingRef = useRef(false)
 
@@ -29,9 +29,9 @@ export function ProductProvider({ children }: ProductProviderProps) {
     async function loadFavorites() {
       try {
         const value = await AsyncStorage.getItem('favorites')
-        const data: FavoriteProducts = value ? JSON.parse(value) : {}
+        const data: FavoriteNews = value ? JSON.parse(value) : {}
 
-        if (isActive) setFavoriteProducts(data)
+        if (isActive) setFavoriteNews(data)
       }
       catch {
         if (isActive) showMessage('Не удалось загрузить избранное. Попробуйте позже')
@@ -48,25 +48,25 @@ export function ProductProvider({ children }: ProductProviderProps) {
     }
   }, [])
 
-  //Добавление или удаление товара из избранного
-  async function changeFavorite(product: Product) {
+  //Добавление или удаление статьи из избранного
+  async function changeFavorite(article: Product) {
     if (isFavoritesLoading || isFavoriteSavingRef.current) return
 
     isFavoriteSavingRef.current = true
 
     try {
       const value = await AsyncStorage.getItem('favorites')
-      const newFavorites: FavoriteProducts = value ? JSON.parse(value) : {}
+      const newFavorites: FavoriteNews = value ? JSON.parse(value) : {}
 
-      if (newFavorites[product.uuid]) {
-        delete newFavorites[product.uuid]
+      if (newFavorites[article.uuid]) {
+        delete newFavorites[article.uuid]
       }
       else {
-        newFavorites[product.uuid] = product
+        newFavorites[article.uuid] = article
       }
 
       await AsyncStorage.setItem('favorites', JSON.stringify(newFavorites))
-      setFavoriteProducts(newFavorites)
+      setFavoriteNews(newFavorites)
     }
     catch {
       showMessage('Не удалось сохранить избранное. Попробуйте позже')
@@ -77,8 +77,8 @@ export function ProductProvider({ children }: ProductProviderProps) {
   }
 
   return (
-    <ProductContext.Provider value={{ favoriteProducts, isFavoritesLoading, changeFavorite }}>
+    <NewsContext.Provider value={{ favoriteNews, isFavoritesLoading, changeFavorite }}>
       {children}
-    </ProductContext.Provider>
+    </NewsContext.Provider>
   )
 }
