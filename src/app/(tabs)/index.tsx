@@ -1,5 +1,6 @@
 import { Search } from '@/assets/icons'
 import { NewsCard } from '@/components/NewsCard'
+import { MainNewsCard } from '@/components/MainNewsCard'
 import { categoryNames } from '@/constants'
 import { NewsContext } from '@/context/NewsContext'
 import { showMessage } from '@/helpers'
@@ -392,17 +393,24 @@ export default function Index() {
         {(isLoading || isErrorLoading) && renderFeedStatus()}
         {!isLoading && !isErrorLoading && (
           <FlatList
-            data={news}
+            data={news.slice(1)}
             refreshing={isRefreshing}
             onRefresh={refreshNews}
             keyboardShouldPersistTaps="handled"
             keyExtractor={item => item.id}
             style={styles.newsList}
             contentContainerStyle={styles.newsListContent}
+            ListHeaderComponent={
+              news[0] && <MainNewsCard article={news[0]} onPress={() => openArticle(news[0])} />
+            }
             ListEmptyComponent={
-              <View style={styles.empty}>
-                <Text style={styles.emptyText}>Ничего не найдено</Text>
-              </View>
+              <>
+                {news.length === 0 && (
+                  <View style={styles.empty}>
+                    <Text style={styles.emptyText}>Ничего не найдено</Text>
+                  </View>
+                )}
+              </>
             }
             onEndReached={loadNextPage}
             onEndReachedThreshold={0.3}
