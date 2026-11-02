@@ -23,7 +23,7 @@ export default function Index() {
       width: '100%',
       maxWidth: 600,
       alignSelf: 'center',
-      paddingVertical: 24,
+      paddingTop: 24,
       gap: 20
     },
     header: {

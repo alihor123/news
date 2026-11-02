@@ -1,11 +1,11 @@
 import { ChevronRight, Star, StarFilled } from '@/assets/icons'
 import { categoryNames } from '@/constants'
 import { NewsContext } from '@/context/NewsContext'
-import { timeFormating } from '@/helpers'
+import { timeAgoFormating } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
 import { type Article } from '@/services/news.api'
 import { Image } from 'expo-image'
-import { useContext } from 'react'
+import { useContext, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 type NewsCardProps = {
@@ -17,7 +17,7 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
   const styles = useStyles((colors) => ({
     article: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       paddingVertical: 8,
       gap: 12
     },
@@ -26,8 +26,7 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
     },
     articleImage: {
       alignSelf: 'flex-start',
-      width: 72,
-      height: 72,
+      width: 114,
       borderRadius: 12,
       backgroundColor: colors.imagePlaceholder
     },
@@ -43,22 +42,21 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
       color: colors.text
     },
     articleCategory: {
-      fontSize: 14,
-      color: colors.textSecondary
-    },
-    articleDescription: {
-      fontSize: 14,
-      lineHeight: 20,
+      flexShrink: 1,
+      fontSize: 12,
+      lineHeight: 18,
       color: colors.textSecondary
     },
     articleMetadata: {
+      flexShrink: 0,
       fontSize: 12,
       lineHeight: 18,
       color: colors.textSecondary
     },
     articleActions: {
       alignSelf: 'stretch',
-      alignItems: 'flex-end',
+      width: 36,
+      alignItems: 'center',
       justifyContent: 'space-between',
       gap: 8
     },
@@ -87,20 +85,31 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
   }))
 
   const { favoriteNews, isFavoritesLoading, changeFavorite } = useContext(NewsContext)!
+  const [imageRatio, setImageRatio] = useState(16 / 9)
   const isFavorite = Boolean(favoriteNews[article.id])
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.article, pressed && styles.articlePressed]}>
       {article.image?.startsWith('http') && (
-        <Image source={{ uri: article.image }} style={styles.articleImage} contentFit="contain" />
+        <Image
+          source={{ uri: article.image }}
+          style={[styles.articleImage, { aspectRatio: imageRatio }]}
+          contentFit="contain"
+          onLoad={({ source }) => {
+            if (source.width > 0 && source.height > 0) {
+              setImageRatio(source.width / source.height)
+            }
+          }}
+        />
       )}
-      {!article.image?.startsWith('http') && <View style={styles.articleImage} />}
+      {!article.image?.startsWith('http') && <View style={[styles.articleImage, { aspectRatio: imageRatio }]} />}
       <View style={styles.articleInfo}>
-        <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
-        <Text style={styles.articleCategory} numberOfLines={1}>{article.category.map(category => categoryNames[category] ?? category).join(', ')}</Text>
-        <Text style={styles.articleDescription} numberOfLines={2}>{article.description}</Text>
+        <Text style={styles.articleTitle} numberOfLines={3}>{article.title}</Text>
+        {article.category.length > 0 && (
+          <Text style={styles.articleCategory} numberOfLines={1}>{article.category.map(category => categoryNames[category] ?? category).join(', ')}</Text>
+        )}
+        <Text style={styles.articleMetadata} numberOfLines={1}>{timeAgoFormating(article.published)}</Text>
         <Text style={styles.articleMetadata} numberOfLines={1}>{new URL(article.url).hostname.replace(/^www\./, '')}</Text>
-        <Text style={styles.articleMetadata}>{timeFormating(article.published)}</Text>
       </View>
       <View style={styles.articleActions}>
         <Image source={ChevronRight} style={styles.articleArrow} tintColor={styles.articleArrow.tintColor} />

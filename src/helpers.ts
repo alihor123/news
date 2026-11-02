@@ -16,3 +16,15 @@ export function timeFormating(date: string) {
     minute: '2-digit'
   })
 }
+export function timeAgoFormating(date: string) {
+  const formattedDate = date.replace(' ', 'T').replace(' +0000', 'Z')
+  const minutes = Math.max(0, Math.floor((Date.now() - new Date(formattedDate).getTime()) / 60000))
+
+  if (minutes < 1) return 'Только что'
+  if (minutes < 60) return `${minutes} мин. назад`
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} ч. назад`
+
+  return `${Math.floor(hours / 24)} дн. назад`
+}
