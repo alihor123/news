@@ -4,9 +4,9 @@ import { NewsContext } from '@/context/NewsContext'
 import { timeFormating } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
 import { Image } from 'expo-image'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useContext } from 'react'
-import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
+import { router } from 'expo-router'
+import { useContext, useState } from 'react'
+import { Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ArticleScreen() {
@@ -27,7 +27,6 @@ export default function ArticleScreen() {
     },
     articleImage: {
       width: '100%',
-      height: 240,
       borderRadius: 16,
       backgroundColor: colors.imagePlaceholder
     },
@@ -68,9 +67,6 @@ export default function ArticleScreen() {
     },
     favoriteSelectedIcon: {
       tintColor: colors.rating
-    },
-    loader: {
-      color: colors.primary
     },
     retryButton: {
       marginTop: 16,
@@ -114,25 +110,20 @@ export default function ArticleScreen() {
   }))
 
   const { favoriteNews, selectedArticle, isFavoritesLoading, changeFavorite } = useContext(NewsContext)!
-  const { id } = useLocalSearchParams<{ id: string }>()
-  const article = selectedArticle?.id === id ? selectedArticle : favoriteNews[id]
+  const [imageRatio, setImageRatio] = useState(16 / 9)
+  const article = selectedArticle
 
   if (!article) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.empty}>
-          {isFavoritesLoading && <ActivityIndicator size="large" color={styles.loader.color} />}
-          {!isFavoritesLoading && (
-            <>
-              <Text style={styles.emptyText}>Откройте статью из ленты или избранного</Text>
-              <Pressable
-                onPress={() => router.replace('/')}
-                style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}
-              >
-                <Text style={styles.retryText}>К ленте</Text>
-              </Pressable>
-            </>
-          )}
+          <Text style={styles.emptyText}>Откройте статью из ленты или избранного</Text>
+          <Pressable
+            onPress={() => router.replace('/')}
+            style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}
+          >
+            <Text style={styles.retryText}>К ленте</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     )
@@ -144,9 +135,18 @@ export default function ArticleScreen() {
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {article.image?.startsWith('http') && (
-          <Image source={{ uri: article.image }} style={styles.articleImage} contentFit="contain" />
+          <Image
+            source={{ uri: article.image }}
+            style={[styles.articleImage, { aspectRatio: imageRatio }]}
+            contentFit="contain"
+            onLoad={({ source }) => {
+              if (source.width > 0 && source.height > 0) {
+                setImageRatio(source.width / source.height)
+              }
+            }}
+          />
         )}
-        {!article.image?.startsWith('http') && <View style={styles.articleImage} />}
+        {!article.image?.startsWith('http') && <View style={[styles.articleImage, { aspectRatio: imageRatio }]} />}
 
         <View style={styles.articleHeader}>
           <View style={styles.articleInfo}>

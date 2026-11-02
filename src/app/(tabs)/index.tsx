@@ -140,6 +140,7 @@ export default function Index() {
   const [isLoading, setIsLoading] = useState(true)
   const [isErrorLoading, setIsErrorLoading] = useState(false)
   const [isNextPageLoading, setIsNextPageLoading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const newsRequestRef = useRef(0)
   const isNewsLoadingRef = useRef(false)
 
@@ -148,6 +149,7 @@ export default function Index() {
     const request = ++newsRequestRef.current
     isNewsLoadingRef.current = true
     setIsLoading(true)
+    setIsRefreshing(false)
     setIsErrorLoading(false)
     setIsNextPageLoading(false)
 
@@ -181,6 +183,7 @@ export default function Index() {
     const request = ++newsRequestRef.current
     isNewsLoadingRef.current = true
     setIsLoading(true)
+    setIsRefreshing(false)
     setIsErrorLoading(false)
     setIsNextPageLoading(false)
 
@@ -226,6 +229,35 @@ export default function Index() {
     },
     [search, filter]
   )
+
+  //Обновление ленты жестом вниз
+  async function refreshNews() {
+    if (isNewsLoadingRef.current) return
+
+    const request = ++newsRequestRef.current
+    isNewsLoadingRef.current = true
+    setIsRefreshing(true)
+
+    try {
+      const data = await getNews({ keywords: search.trim(), category: filter ?? undefined })
+
+      if (request !== newsRequestRef.current) return
+
+      setNews([...new Map(data.news.map(article => [article.id, article])).values()])
+      setNextCursor(data.next_cursor)
+    }
+    catch (error) {
+      if (request === newsRequestRef.current) {
+        showMessage(error instanceof ApiError ? error.message : 'Не удалось обновить новости')
+      }
+    }
+    finally {
+      if (request === newsRequestRef.current) {
+        isNewsLoadingRef.current = false
+        setIsRefreshing(false)
+      }
+    }
+  }
 
   //Загрузка следующей страницы при прокрутке
   async function loadNextPage() {
@@ -361,6 +393,8 @@ export default function Index() {
         {!isLoading && !isErrorLoading && (
           <FlatList
             data={news}
+            refreshing={isRefreshing}
+            onRefresh={refreshNews}
             keyboardShouldPersistTaps="handled"
             keyExtractor={item => item.id}
             style={styles.newsList}
