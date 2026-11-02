@@ -1,13 +1,14 @@
 import { ChevronRight, Star, StarFilled } from '@/assets/icons'
 import { NewsContext } from '@/context/NewsContext'
+import { timeFormating } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
-import { type Product } from '@/services/products.api'
+import { type Article } from '@/services/news.api'
 import { Image } from 'expo-image'
 import { useContext } from 'react'
 import { Pressable, Text, View } from 'react-native'
 
 type NewsCardProps = {
-  article: Product
+  article: Article
   onPress: () => void
 }
 
@@ -23,6 +24,7 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
       transform: [{ scale: 0.98 }]
     },
     articleImage: {
+      alignSelf: 'flex-start',
       width: 72,
       height: 72,
       borderRadius: 12,
@@ -46,6 +48,11 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
     articleDescription: {
       fontSize: 14,
       lineHeight: 20,
+      color: colors.textSecondary
+    },
+    articleMetadata: {
+      fontSize: 12,
+      lineHeight: 18,
       color: colors.textSecondary
     },
     articleActions: {
@@ -79,19 +86,20 @@ export function NewsCard({ article, onPress }: NewsCardProps) {
   }))
 
   const { favoriteNews, isFavoritesLoading, changeFavorite } = useContext(NewsContext)!
-  const isFavorite = Boolean(favoriteNews[article.uuid])
+  const isFavorite = Boolean(favoriteNews[article.id])
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.article, pressed && styles.articlePressed]}>
-      <Image
-        source={{ uri: article.image_url }}
-        style={styles.articleImage}
-        contentFit="contain"
-      />
+      {article.image?.startsWith('http') && (
+        <Image source={{ uri: article.image }} style={styles.articleImage} contentFit="contain" contentPosition="top" />
+      )}
+      {!article.image?.startsWith('http') && <View style={styles.articleImage} />}
       <View style={styles.articleInfo}>
-        <Text style={styles.articleTitle} numberOfLines={2}>{article.name}</Text>
-        <Text style={styles.articleCategory}>{article.category}</Text>
+        <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
+        <Text style={styles.articleCategory} numberOfLines={1}>{article.category.join(', ')}</Text>
         <Text style={styles.articleDescription} numberOfLines={2}>{article.description}</Text>
+        <Text style={styles.articleMetadata} numberOfLines={1}>{new URL(article.url).hostname.replace(/^www\./, '')}</Text>
+        <Text style={styles.articleMetadata}>{timeFormating(article.published)}</Text>
       </View>
       <View style={styles.articleActions}>
         <Image source={ChevronRight} style={styles.articleArrow} tintColor={styles.articleArrow.tintColor} />

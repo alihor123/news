@@ -1,11 +1,12 @@
 import { Search } from '@/assets/icons'
 import { NewsCard } from '@/components/NewsCard'
+import { NewsContext } from '@/context/NewsContext'
 import { showMessage } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
-import { getCategories, getProducts, type Category, type Product } from '@/services/products.api'
+import { getCategories, getNews, type Article } from '@/services/news.api'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import { useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ApiError } from '@/services/api'
@@ -129,12 +130,12 @@ export default function Index() {
     }
   }))
 
-  const [news, setNews] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const { setSelectedArticle } = useContext(NewsContext)!
+  const [news, setNews] = useState<Article[]>([])
+  const [categories, setCategories] = useState<string[]>([])
   const [filter, setFilter] = useState<string | null>(null)
   const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isErrorLoading, setIsErrorLoading] = useState(false)
   const [isNextPageLoading, setIsNextPageLoading] = useState(false)
@@ -152,15 +153,14 @@ export default function Index() {
     try {
       const [newCategories, data] = await Promise.all([
         getCategories(),
-        getProducts({ search: search.trim(), category: filter ?? undefined })
+        getNews({ keywords: search.trim(), category: filter ?? undefined })
       ])
 
       if (request !== newsRequestRef.current) return
 
       setCategories(newCategories)
-      setNews(data.data)
-      setPage(data.meta.current_page)
-      setTotalPages(data.meta.total_pages)
+      setNews([...new Map(data.news.map(article => [article.id, article])).values()])
+      setNextCursor(data.next_cursor)
     }
     catch {
       if (request === newsRequestRef.current) {
@@ -184,13 +184,12 @@ export default function Index() {
     setIsNextPageLoading(false)
 
     try {
-      const data = await getProducts({ search: search.trim(), category: filter ?? undefined })
+      const data = await getNews({ keywords: search.trim(), category: filter ?? undefined })
 
       if (request !== newsRequestRef.current) return
 
-      setNews(data.data)
-      setPage(data.meta.current_page)
-      setTotalPages(data.meta.total_pages)
+      setNews([...new Map(data.news.map(article => [article.id, article])).values()])
+      setNextCursor(data.next_cursor)
     }
     catch {
       if (request === newsRequestRef.current) {
@@ -229,24 +228,23 @@ export default function Index() {
 
   //Загрузка следующей страницы при прокрутке
   async function loadNextPage() {
-    if (isNewsLoadingRef.current || page >= totalPages) return
+    if (isNewsLoadingRef.current || !nextCursor) return
 
     const request = ++newsRequestRef.current
     isNewsLoadingRef.current = true
     setIsNextPageLoading(true)
 
     try {
-      const data = await getProducts({
-        search: search.trim(),
+      const data = await getNews({
+        keywords: search.trim(),
         category: filter ?? undefined,
-        page: page + 1
+        cursor: nextCursor
       })
 
       if (request !== newsRequestRef.current) return
 
-      setNews(previousNews => [...previousNews, ...data.data])
-      setPage(data.meta.current_page)
-      setTotalPages(data.meta.total_pages)
+      setNews(previousNews => [...new Map([...previousNews, ...data.news].map(article => [article.id, article])).values()])
+      setNextCursor(data.next_cursor)
     }
     catch (error) {
       if (request === newsRequestRef.current) {
@@ -262,10 +260,12 @@ export default function Index() {
   }
 
   //Открытие экрана конкретной статьи
-  function openArticle(uuid: string) {
+  function openArticle(article: Article) {
+    setSelectedArticle(article)
+
     router.push({
       pathname: '/article/[id]',
-      params: { id: uuid }
+      params: { id: article.id }
     })
   }
 
@@ -338,19 +338,19 @@ export default function Index() {
           </Pressable>
           {categories.map(category => (
             <Pressable
-              key={category.id}
-              onPress={() => setFilter(category.slug)}
+              key={category}
+              onPress={() => setFilter(category)}
               style={({ pressed }) => [
                 styles.category,
-                filter === category.slug && styles.categorySelected,
+                filter === category && styles.categorySelected,
                 pressed && styles.buttonPressed
               ]}
             >
               <Text style={[
                 styles.categoryText,
-                filter === category.slug && styles.categorySelectedText
+                filter === category && styles.categorySelectedText
               ]}>
-                {category.name}
+                {category}
               </Text>
             </Pressable>
           ))}
@@ -361,7 +361,7 @@ export default function Index() {
           <FlatList
             data={news}
             keyboardShouldPersistTaps="handled"
-            keyExtractor={item => item.uuid}
+            keyExtractor={item => item.id}
             style={styles.newsList}
             contentContainerStyle={styles.newsListContent}
             ListEmptyComponent={
@@ -379,7 +379,7 @@ export default function Index() {
             renderItem={({ item }) => (
               <NewsCard
                 article={item}
-                onPress={() => openArticle(item.uuid)}
+                onPress={() => openArticle(item)}
               />
             )}
           />

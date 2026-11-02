@@ -1,11 +1,11 @@
 import { Star, StarFilled } from '@/assets/icons'
 import { NewsContext } from '@/context/NewsContext'
+import { timeFormating } from '@/helpers'
 import { useStyles } from '@/hooks/useStyles'
-import { getProduct, type Product } from '@/services/products.api'
 import { Image } from 'expo-image'
-import { useLocalSearchParams } from 'expo-router'
-import { useContext, useEffect, useState } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { router, useLocalSearchParams } from 'expo-router'
+import { useContext } from 'react'
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function ArticleScreen() {
@@ -42,6 +42,11 @@ export default function ArticleScreen() {
     },
     articleCategory: {
       fontSize: 16,
+      color: colors.textSecondary
+    },
+    articleMetadata: {
+      fontSize: 14,
+      lineHeight: 22,
       color: colors.textSecondary
     },
     articleHeader: {
@@ -101,67 +106,29 @@ export default function ArticleScreen() {
       padding: 24
     },
     emptyText: {
+      textAlign: 'center',
       fontSize: 16,
       color: colors.textSecondary
     }
   }))
 
-  const { favoriteNews, isFavoritesLoading, changeFavorite } = useContext(NewsContext)!
+  const { favoriteNews, selectedArticle, isFavoritesLoading, changeFavorite } = useContext(NewsContext)!
   const { id } = useLocalSearchParams<{ id: string }>()
-  const [article, setArticle] = useState<Product | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isErrorLoading, setIsErrorLoading] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
+  const article = selectedArticle?.id === id ? selectedArticle : favoriteNews[id]
 
-  //Загрузка статьи по UUID и повторная попытка
-  useEffect(() => {
-    let isActive = true
-
-    async function loadArticle() {
-      setIsLoading(true)
-      setIsErrorLoading(false)
-
-      try {
-        const data = await getProduct(id)
-
-        if (isActive) setArticle(data)
-      }
-      catch {
-        if (isActive) setIsErrorLoading(true)
-      }
-      finally {
-        if (isActive) setIsLoading(false)
-      }
-    }
-
-    const timer = setTimeout(loadArticle, 0)
-
-    return () => {
-      clearTimeout(timer)
-      isActive = false
-    }
-  }, [id, retryCount])
-
-  //Повторная загрузка статьи после ошибки
-  function retryLoadArticle() {
-    setIsLoading(true)
-    setIsErrorLoading(false)
-    setRetryCount(previousCount => previousCount + 1)
-  }
-
-  if (isLoading || isErrorLoading || !article) {
+  if (!article) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
         <View style={styles.empty}>
-          {isLoading && <ActivityIndicator size="large" color={styles.loader.color} />}
-          {!isLoading && isErrorLoading && (
+          {isFavoritesLoading && <ActivityIndicator size="large" color={styles.loader.color} />}
+          {!isFavoritesLoading && (
             <>
-              <Text style={styles.emptyText}>Не удалось загрузить статью</Text>
+              <Text style={styles.emptyText}>Откройте статью из ленты или избранного</Text>
               <Pressable
-                onPress={retryLoadArticle}
+                onPress={() => router.replace('/')}
                 style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}
               >
-                <Text style={styles.retryText}>Повторить</Text>
+                <Text style={styles.retryText}>К ленте</Text>
               </Pressable>
             </>
           )}
@@ -170,17 +137,20 @@ export default function ArticleScreen() {
     )
   }
 
-  const isFavorite = Boolean(favoriteNews[article.uuid])
+  const isFavorite = Boolean(favoriteNews[article.id])
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Image source={{ uri: article.image_url }} style={styles.articleImage} contentFit="contain" />
+        {article.image?.startsWith('http') && (
+          <Image source={{ uri: article.image }} style={styles.articleImage} contentFit="contain" />
+        )}
+        {!article.image?.startsWith('http') && <View style={styles.articleImage} />}
 
         <View style={styles.articleHeader}>
           <View style={styles.articleInfo}>
-            <Text style={styles.articleTitle}>{article.name}</Text>
-            <Text style={styles.articleCategory}>{article.category}</Text>
+            <Text style={styles.articleTitle}>{article.title}</Text>
+            <Text style={styles.articleCategory}>{article.category.join(', ')}</Text>
           </View>
           <Pressable
             disabled={isFavoritesLoading}
@@ -196,10 +166,21 @@ export default function ArticleScreen() {
           </Pressable>
         </View>
 
+        <View>
+          <Text style={styles.articleMetadata}>{new URL(article.url).hostname.replace(/^www\./, '')}</Text>
+          <Text style={styles.articleMetadata}>{timeFormating(article.published)}</Text>
+        </View>
+
         <View style={styles.description}>
           <Text style={styles.descriptionTitle}>Описание</Text>
           <Text style={styles.descriptionText}>{article.description}</Text>
         </View>
+        <Pressable
+          onPress={() => Linking.openURL(article.url)}
+          style={({ pressed }) => [styles.retryButton, pressed && styles.buttonPressed]}
+        >
+          <Text style={styles.retryText}>Читать в источнике</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   )

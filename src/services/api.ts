@@ -101,7 +101,7 @@ export class Api {
       try {
         return await fetch(url, {
           ...init,
-          headers: method === 'GET' ? undefined : Api.getHeaders(requestType),
+          headers: method === 'GET' ? init.headers : Api.getHeaders(requestType),
           signal: controller.signal
         })
       }
@@ -163,9 +163,10 @@ export class Api {
   static async fetchGet(
     path: string,
     errors: Errors = {},
-    errorsReplace: boolean = false
+    errorsReplace: boolean = false,
+    headers?: Record<string, string>
   ): Promise<Response> {
-    return Api.request(path, { method: 'GET' }, errors, errorsReplace)
+    return Api.request(path, { method: 'GET', headers }, errors, errorsReplace)
   }
 
 

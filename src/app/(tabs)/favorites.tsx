@@ -1,6 +1,7 @@
 import { NewsCard } from '@/components/NewsCard'
 import { NewsContext } from '@/context/NewsContext'
 import { useStyles } from '@/hooks/useStyles'
+import { type Article } from '@/services/news.api'
 import { router } from 'expo-router'
 import { useContext } from 'react'
 import { ActivityIndicator, FlatList, Text, View } from 'react-native'
@@ -49,13 +50,15 @@ export default function Favorites() {
     }
   }))
 
-  const { favoriteNews, isFavoritesLoading } = useContext(NewsContext)!
+  const { favoriteNews, isFavoritesLoading, setSelectedArticle } = useContext(NewsContext)!
 
   //Открытие статьи из избранного
-  function openArticle(uuid: string) {
+  function openArticle(article: Article) {
+    setSelectedArticle(article)
+
     router.push({
       pathname: '/article/[id]',
-      params: { id: uuid }
+      params: { id: article.id }
     })
   }
 
@@ -71,7 +74,7 @@ export default function Favorites() {
         {!isFavoritesLoading && (
           <FlatList
             data={Object.values(favoriteNews)}
-            keyExtractor={item => item.uuid}
+            keyExtractor={item => item.id}
             style={styles.newsList}
             contentContainerStyle={styles.newsListContent}
             ListEmptyComponent={
@@ -80,7 +83,7 @@ export default function Favorites() {
               </View>
             }
             renderItem={({ item }) => (
-              <NewsCard article={item} onPress={() => openArticle(item.uuid)} />
+              <NewsCard article={item} onPress={() => openArticle(item)} />
             )}
           />
         )}
